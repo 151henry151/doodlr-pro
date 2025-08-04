@@ -17,6 +17,7 @@ const ACTIONS = {
   SET_ERROR: 'SET_ERROR',
   UPDATE_SQUARE: 'UPDATE_SQUARE',
   SET_COLORS: 'SET_COLORS',
+  SET_NAVIGATION_HISTORY: 'SET_NAVIGATION_HISTORY',
 };
 
 // Initial state
@@ -105,6 +106,12 @@ function canvasReducer(state, action) {
         colors: action.payload,
       };
     
+    case ACTIONS.SET_NAVIGATION_HISTORY:
+      return {
+        ...state,
+        navigationHistory: action.payload,
+      };
+    
     default:
       return state;
   }
@@ -144,9 +151,14 @@ export function CanvasProvider({ children }) {
         response = await apiService.getCanvasAtLevel(state.level, state.parentX, state.parentY);
       }
       
+      console.log('API Response:', response);
+      console.log('Canvas squares count:', response.canvas.squares.length);
+      
       dispatch({ type: ACTIONS.SET_CANVAS, payload: response.canvas });
     } catch (error) {
-      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
+      console.error('Canvas loading error:', error);
+      const errorMessage = error.message || error.toString() || 'Failed to load canvas';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
     }
   };
 
@@ -158,17 +170,23 @@ export function CanvasProvider({ children }) {
     try {
       const response = await apiService.zoomToPosition(x, y, state.level);
       
+      console.log('Zoom response:', response);
+      
       // Add current position to navigation history
       const newHistory = [
         ...state.navigationHistory,
         { level: state.level, parentX: state.parentX, parentY: state.parentY }
       ];
       
+      // Update state with new level, position, canvas, and history
       dispatch({ type: ACTIONS.SET_LEVEL, payload: response.level });
       dispatch({ type: ACTIONS.SET_PARENT_POSITION, payload: { x: response.parent_x, y: response.parent_y } });
       dispatch({ type: ACTIONS.SET_CANVAS, payload: response.canvas });
+      dispatch({ type: ACTIONS.SET_NAVIGATION_HISTORY, payload: newHistory });
     } catch (error) {
-      dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
+      console.error('Zoom error:', error);
+      const errorMessage = error.message || error.toString() || 'Unknown error occurred';
+      dispatch({ type: ACTIONS.SET_ERROR, payload: errorMessage });
     }
   };
 
@@ -198,13 +216,28 @@ export function CanvasProvider({ children }) {
     const previous = state.navigationHistory[state.navigationHistory.length - 1];
     const newHistory = state.navigationHistory.slice(0, -1);
     
+    console.log('Going back to:', previous);
+    
     dispatch({ type: ACTIONS.SET_LEVEL, payload: previous.level });
     dispatch({ type: ACTIONS.SET_PARENT_POSITION, payload: { x: previous.parentX, y: previous.parentY } });
+    dispatch({ type: ACTIONS.SET_NAVIGATION_HISTORY, payload: newHistory });
+    
+    // Reload canvas for the previous level
+    setTimeout(() => {
+      loadCanvas();
+    }, 100);
   };
 
   const goToRoot = () => {
+    console.log('Going to root');
     dispatch({ type: ACTIONS.SET_LEVEL, payload: 1 });
     dispatch({ type: ACTIONS.SET_PARENT_POSITION, payload: { x: 0, y: 0 } });
+    dispatch({ type: ACTIONS.SET_NAVIGATION_HISTORY, payload: [] });
+    
+    // Reload canvas for root level
+    setTimeout(() => {
+      loadCanvas();
+    }, 100);
   };
 
   const value = {
