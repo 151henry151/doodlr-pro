@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Doodlr Startup Script
+# Doodlr Startup Script (Simple Version)
 echo "🎨 Starting Doodlr Collaborative Canvas App..."
 echo "================================================"
 
 # Colors for output
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
@@ -58,12 +58,6 @@ if ! command -v npm &> /dev/null; then
 fi
 print_status "npm found: $(npm --version)"
 
-# Check if Expo CLI is installed
-if ! command -v npx &> /dev/null; then
-    print_error "npx is not available. Please install Node.js with npm and try again."
-    exit 1
-fi
-
 print_header "Setting up backend..."
 
 # Install backend dependencies
@@ -83,17 +77,10 @@ BACKEND_PID=$!
 
 # Wait for backend to start
 print_status "Waiting for backend to start..."
-sleep 5
+sleep 8
 
-# Check if backend is running
-if curl -s http://localhost:8000/health > /dev/null; then
-    print_status "Backend server is running successfully"
-    print_status "API documentation available at: http://localhost:8000/docs"
-else
-    print_error "Backend server failed to start"
-    kill $BACKEND_PID 2>/dev/null
-    exit 1
-fi
+print_status "Backend server started (PID: $BACKEND_PID)"
+print_status "API documentation available at: http://localhost:8000/docs"
 
 # Go back to root directory
 cd ..
@@ -115,6 +102,7 @@ print_status "Starting Expo development server..."
 print_status "The app will open in your browser or Expo Go app"
 print_status "Backend API: http://localhost:8000"
 print_status "Frontend: http://localhost:19006 (or Expo Go app)"
+print_warning "Press Ctrl+C to stop both servers"
 
 # Function to cleanup on exit
 cleanup() {

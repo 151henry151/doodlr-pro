@@ -84,8 +84,11 @@ doodlr/
 git clone <repository-url>
 cd doodlr
 
-# Run the startup script
+# Run the startup script (with health checks)
 ./start.sh
+
+# Or use the simple version (no health checks)
+./start-simple.sh
 ```
 
 ### Option 2: Manual setup
@@ -197,6 +200,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 2. **Frontend won't start**: Make sure Node.js is installed and run `npm install`
 3. **API connection errors**: Make sure the backend is running on `http://localhost:8000`
 4. **WebSocket errors**: Check that the backend supports WebSocket connections
+5. **Startup script fails**: Try using `./start-simple.sh` instead of `./start.sh` if you don't have `curl` installed
+6. **Permission denied**: Make sure the startup scripts are executable: `chmod +x start.sh start-simple.sh`
 
 ### Getting Help
 
