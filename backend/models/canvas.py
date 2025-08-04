@@ -91,18 +91,15 @@ class CanvasManager:
         if not child_squares:
             return None
         
-        # Count colors
-        color_counts = {}
-        for square in child_squares:
-            color = square.color
-            color_counts[color] = color_counts.get(color, 0) + 1
-        
-        # Return the most common color
-        if color_counts:
-            dominant_color = max(color_counts, key=color_counts.get)
-            return dominant_color
-        
-        return None
+        # Simple approach: if any child squares are painted, show a mixed color
+        # Count different colors
+        colors = set(square.color for square in child_squares)
+        if len(colors) == 1:
+            # All squares have the same color
+            return list(colors)[0]
+        else:
+            # Mixed colors - use a neutral color to indicate mixed content
+            return "#CCCCCC"  # Light gray for mixed colors
     
     def _create_default_squares(self, level: int, parent_x: int = 0, parent_y: int = 0) -> List[CanvasSquare]:
         """Create default squares for a level if none exist."""
@@ -128,6 +125,8 @@ class CanvasManager:
         if level != self.max_level:
             return False  # Can only paint at the deepest level
         
+        print(f"DEBUG: Painting square ({x},{y}) at level {level} with color {color}")
+        
         # Find or create the square
         square = db.query(DBCanvasSquare).filter(
             DBCanvasSquare.x == x,
@@ -144,9 +143,14 @@ class CanvasManager:
                 is_zoomable=False
             )
             db.add(square)
+            print(f"DEBUG: Created new square at level {level}")
         else:
             square.color = color
             square.updated_at = datetime.utcnow()
+            print(f"DEBUG: Updated existing square at level {level}")
+        
+        # Update parent squares at higher levels
+        self._update_parent_squares(db, x, y, level, color)
         
         # Log the action
         action = DBUserAction(
@@ -160,7 +164,45 @@ class CanvasManager:
         db.add(action)
         
         db.commit()
+        print(f"DEBUG: Committed changes to database")
         return True
+    
+    def _update_parent_squares(self, db: Session, x: int, y: int, level: int, color: str):
+        """Update parent squares at higher levels to show the painted area."""
+        for parent_level in range(1, level):
+            # Calculate parent coordinates
+            parent_x = x // (3 ** (level - parent_level))
+            parent_y = y // (3 ** (level - parent_level))
+            
+            print(f"DEBUG: Updating parent square ({parent_x},{parent_y}) at level {parent_level}")
+            
+            # Find or create parent square
+            parent_square = db.query(DBCanvasSquare).filter(
+                DBCanvasSquare.x == parent_x,
+                DBCanvasSquare.y == parent_y,
+                DBCanvasSquare.level == parent_level
+            ).first()
+            
+            if not parent_square:
+                parent_square = DBCanvasSquare(
+                    x=parent_x,
+                    y=parent_y,
+                    level=parent_level,
+                    color=color,  # Use the same color for now
+                    is_zoomable=True
+                )
+                db.add(parent_square)
+                print(f"DEBUG: Created parent square at level {parent_level}")
+            else:
+                # Update with a mixed color if it already has a different color
+                if parent_square.color and parent_square.color != color:
+                    parent_square.color = "#CCCCCC"  # Light gray for mixed colors
+                    print(f"DEBUG: Updated parent square to mixed color at level {parent_level}")
+                elif not parent_square.color:
+                    parent_square.color = color
+                    print(f"DEBUG: Updated parent square with color {color} at level {parent_level}")
+                else:
+                    print(f"DEBUG: Parent square already has color {parent_square.color} at level {parent_level}")
     
     def zoom_to_position(self, db: Session, user_id: str, x: int, y: int, level: int) -> Optional[CanvasState]:
         """Zoom to a specific position in the canvas."""

@@ -205,6 +205,11 @@ export function CanvasProvider({ children }) {
         type: ACTIONS.UPDATE_SQUARE,
         payload: { x, y, level: state.level, color: state.selectedColor }
       });
+      
+      // Reload the canvas to show the updated colors
+      setTimeout(() => {
+        loadCanvas(state.level, state.parentX, state.parentY);
+      }, 100);
     } catch (error) {
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
     }
