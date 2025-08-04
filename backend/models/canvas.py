@@ -36,7 +36,7 @@ class CanvasManager:
         for square in squares:
             position = Position(square.x, square.y, CanvasLevel(square.level))
             
-            # For higher levels, calculate aggregated color from all child squares
+            # For higher levels, always calculate aggregated color from all child squares
             color = square.color
             if level < self.max_level:
                 aggregated_color = self._calculate_aggregated_color(db, square.x, square.y, level)
