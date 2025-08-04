@@ -89,12 +89,8 @@ class ApiService {
       params.append('user_id', userId);
     }
 
-    return this.request('/canvas/paint', {
+    return this.request(`/canvas/paint?${params.toString()}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
     });
   }
 

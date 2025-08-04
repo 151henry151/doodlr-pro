@@ -65,6 +65,8 @@ const Canvas = () => {
     const borderColor = square.is_zoomable ? '#007AFF' : '#CCCCCC';
     const borderWidth = square.is_zoomable ? 2 : 1;
 
+    console.log(`Square ${index}: (${square.position.x},${square.position.y}) - zoomable: ${square.is_zoomable}, level: ${level}`);
+
     return (
       <TouchableOpacity
         key={`square-${square.position.x}-${square.position.y}`}

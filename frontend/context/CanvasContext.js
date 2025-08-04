@@ -140,15 +140,19 @@ export function CanvasProvider({ children }) {
     }
   };
 
-  const loadCanvas = async () => {
+  const loadCanvas = async (level = null, parentX = null, parentY = null) => {
     dispatch({ type: ACTIONS.SET_LOADING, payload: true });
     
     try {
+      const currentLevel = level !== null ? level : state.level;
+      const currentParentX = parentX !== null ? parentX : state.parentX;
+      const currentParentY = parentY !== null ? parentY : state.parentY;
+      
       let response;
-      if (state.level === 1) {
+      if (currentLevel === 1) {
         response = await apiService.getCanvasRoot();
       } else {
-        response = await apiService.getCanvasAtLevel(state.level, state.parentX, state.parentY);
+        response = await apiService.getCanvasAtLevel(currentLevel, currentParentX, currentParentY);
       }
       
       console.log('API Response:', response);
@@ -222,9 +226,9 @@ export function CanvasProvider({ children }) {
     dispatch({ type: ACTIONS.SET_PARENT_POSITION, payload: { x: previous.parentX, y: previous.parentY } });
     dispatch({ type: ACTIONS.SET_NAVIGATION_HISTORY, payload: newHistory });
     
-    // Reload canvas for the previous level
+    // Reload canvas for the previous level with correct parameters
     setTimeout(() => {
-      loadCanvas();
+      loadCanvas(previous.level, previous.parentX, previous.parentY);
     }, 100);
   };
 
@@ -236,7 +240,7 @@ export function CanvasProvider({ children }) {
     
     // Reload canvas for root level
     setTimeout(() => {
-      loadCanvas();
+      loadCanvas(1, 0, 0);
     }, 100);
   };
 
