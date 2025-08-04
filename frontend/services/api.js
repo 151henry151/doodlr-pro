@@ -19,18 +19,52 @@ class ApiService {
       ...options,
     };
 
+    console.log('Making API request to:', url);
+    console.log('Request config:', config);
+
     try {
-      const response = await fetch(url, config);
+      // Add timeout to the request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (!response.ok) {
-        throw new Error(data.detail || 'API request failed');
+        const errorMessage = data.detail || data.message || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
       
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+      console.error('API request failed for URL:', url);
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // Create a more informative error message
+      let errorMessage = 'API request failed';
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out';
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.toString) {
+        errorMessage = error.toString();
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -75,12 +109,8 @@ class ApiService {
       params.append('user_id', userId);
     }
 
-    return this.request('/canvas/zoom', {
+    return this.request(`/canvas/zoom?${params.toString()}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
     });
   }
 
