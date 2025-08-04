@@ -94,15 +94,24 @@ const Canvas = () => {
   return (
     <View style={styles.container}>
       <View style={styles.canvas}>
-        {/* Create explicit 3x3 grid */}
+        {/* Create explicit 3x3 grid with proper sorting */}
         <View style={styles.row}>
-          {canvas.squares.filter(s => s.position.y === 0).map((square, index) => renderSquare(square, index))}
+          {canvas.squares
+            .filter(s => s.position.y === Math.min(...canvas.squares.map(sq => sq.position.y)))
+            .sort((a, b) => a.position.x - b.position.x)
+            .map((square, index) => renderSquare(square, index))}
         </View>
         <View style={styles.row}>
-          {canvas.squares.filter(s => s.position.y === 1).map((square, index) => renderSquare(square, index + 3))}
+          {canvas.squares
+            .filter(s => s.position.y === Math.min(...canvas.squares.map(sq => sq.position.y)) + 1)
+            .sort((a, b) => a.position.x - b.position.x)
+            .map((square, index) => renderSquare(square, index + 3))}
         </View>
         <View style={styles.row}>
-          {canvas.squares.filter(s => s.position.y === 2).map((square, index) => renderSquare(square, index + 6))}
+          {canvas.squares
+            .filter(s => s.position.y === Math.min(...canvas.squares.map(sq => sq.position.y)) + 2)
+            .sort((a, b) => a.position.x - b.position.x)
+            .map((square, index) => renderSquare(square, index + 6))}
         </View>
       </View>
       {/* Debug info */}
