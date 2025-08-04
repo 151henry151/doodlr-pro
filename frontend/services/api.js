@@ -2,11 +2,11 @@
  * API service for communicating with the Doodlr backend.
  */
 
-const API_BASE_URL = 'http://localhost:8000';
+import { API_CONFIG } from '../config';
 
 class ApiService {
   constructor() {
-    this.baseUrl = API_BASE_URL;
+    this.baseUrl = API_CONFIG.BASE_URL;
   }
 
   async request(endpoint, options = {}) {
@@ -90,7 +90,7 @@ class ApiService {
 
   // WebSocket connection for real-time updates
   connectWebSocket(onMessage) {
-    const ws = new WebSocket(`ws://localhost:8000/canvas/ws`);
+    const ws = new WebSocket(`${API_CONFIG.WS_URL}/canvas/ws`);
     
     ws.onopen = () => {
       console.log('WebSocket connected');
