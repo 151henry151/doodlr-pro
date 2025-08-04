@@ -38,8 +38,11 @@ class CanvasManager:
             
             # For higher levels, always calculate aggregated color from all child squares
             color = square.color
+            print(f"DEBUG: Processing square ({square.x},{square.y}) at level {level}, original color: {color}")
             if level < self.max_level:
+                print(f"DEBUG: Calculating aggregated color for square ({square.x},{square.y}) at level {level}")
                 aggregated_color = self._calculate_aggregated_color(db, square.x, square.y, level)
+                print(f"DEBUG: Calculated aggregated color: {aggregated_color}")
                 # Use aggregated color if available, otherwise use the square's own color
                 color = aggregated_color if aggregated_color else color
             
@@ -74,16 +77,11 @@ class CanvasManager:
         
         # Get all painted squares at the deepest level (level 4) that belong to this parent
         # Calculate the range of coordinates at the deepest level
-        # For level 1 parent (0,0), we want level 4 squares (0,0) to (26,26)
-        # For level 2 parent (0,0), we want level 4 squares (0,0) to (8,8)
-        # For level 3 parent (0,0), we want level 4 squares (0,0) to (2,2)
         level_diff = self.max_level - level
         child_start_x = parent_x * (3 ** level_diff)
         child_start_y = parent_y * (3 ** level_diff)
         child_end_x = (parent_x + 1) * (3 ** level_diff)
         child_end_y = (parent_y + 1) * (3 ** level_diff)
-        
-        print(f"DEBUG: Level {level} parent ({parent_x},{parent_y}) maps to level {self.max_level} range: x={child_start_x}-{child_end_x}, y={child_start_y}-{child_end_y}")
         
         # Get all painted squares at the deepest level within this range
         painted_squares = db.query(DBCanvasSquare).filter(
@@ -95,20 +93,18 @@ class CanvasManager:
             DBCanvasSquare.color.isnot(None)
         ).all()
         
-        print(f"DEBUG: Found {len(painted_squares)} painted squares")
-        for square in painted_squares:
-            print(f"DEBUG: Painted square ({square.x},{square.y}) has color {square.color}")
-        
         if not painted_squares:
             return None
         
-        # If all squares have the same color, use that color
+        # Simple approach: if any child squares are painted, show a mixed color
+        # Count different colors
         colors = set(square.color for square in painted_squares)
         if len(colors) == 1:
+            # All squares have the same color
             return list(colors)[0]
-        
-        # If there are mixed colors, calculate an average color
-        return self._calculate_average_color([square.color for square in painted_squares])
+        else:
+            # Mixed colors - use a neutral color to indicate mixed content
+            return "#CCCCCC"  # Light gray for mixed colors
     
     def _calculate_average_color(self, colors: List[str]) -> str:
         """Calculate the average color from a list of hex colors."""

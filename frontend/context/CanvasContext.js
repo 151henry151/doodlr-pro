@@ -211,6 +211,7 @@ export function CanvasProvider({ children }) {
         loadCanvas(state.level, state.parentX, state.parentY);
       }, 100);
     } catch (error) {
+      console.error('Paint error:', error);
       dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
     }
   };
