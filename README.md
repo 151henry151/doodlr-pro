@@ -2,22 +2,57 @@
 
 ## Overview
 
-Doodlr is a cross-platform collaborative drawing app built with Expo React Native and Python FastAPI backend. Users can create artwork on a shared canvas by zooming into specific areas and painting individual pixels.
+Doodlr is a cross-platform collaborative drawing app built with Expo React Native and Python FastAPI backend. Users can create artwork on a shared canvas by navigating through a hierarchical zoom system and painting individual pixels at the deepest level.
 
 ## Core Concept
 
-The app features a hierarchical canvas system:
-- The main canvas is divided into 9 squares
-- Each square can be further divided into 9 squares (up to 4 levels deep)
-- Users can "zoom in" by clicking on squares to navigate deeper into the canvas
-- At the deepest level, users can paint individual squares with colors from a palette
-- The canvas is shared among all users, creating a collaborative graffiti board
+The app features a hierarchical canvas system with 4 distinct zoom levels:
+
+### Zoom Level System
+
+**Level 1: Root View**
+- Shows ALL 6,561 pixels organized into 9 clickable sections
+- Each section represents 729 pixels (27×27 pixels)
+- Users can click any section to zoom into that area
+
+**Level 2: Section View**
+- Shows 729 pixels in the selected section, organized into 9 clickable subsections
+- Each subsection represents 81 pixels (9×9 pixels)
+- Users can click any subsection to zoom deeper
+
+**Level 3: Subsection View**
+- Shows 81 pixels in the selected subsection, organized into 9 clickable areas
+- Each area represents 9 pixels (3×3 pixels)
+- Users can click any area to reach the final zoom level
+
+**Level 4: Pixel View**
+- Shows 9 individual pixels in the selected area
+- These are the actual pixels users can paint with colors
+- Each pixel is a single unit that can be colored independently
+
+### Navigation and Painting
+
+- **Zooming In**: Click any section at any level to navigate deeper into the canvas
+- **Painting**: Only available at Level 4, where users can select colors and paint individual pixels
+- **Navigation Back**: Use the back button to return to previous levels
+- **Collaboration**: All users share the same canvas, seeing real-time updates from others
+
+### Canvas Structure
+
+The canvas follows a mathematical hierarchy:
+- **Total Pixels**: 6,561 (81×81 grid)
+- **Level 1**: 9 sections of 27×27 pixels each (729 pixels per section)
+- **Level 2**: 9 subsections of 9×9 pixels each (81 pixels per subsection)
+- **Level 3**: 9 areas of 3×3 pixels each (9 pixels per area)
+- **Level 4**: 9 individual pixels (1×1 each)
+
+This creates a perfect 3×3×3×3 = 81×81 = 6,561 pixel canvas that can be navigated systematically.
 
 ## Features
 
-- **Hierarchical Canvas**: 4-level deep zoom system
+- **Hierarchical Canvas**: 4-level deep zoom system with 6,561 total pixels
 - **Real-time Collaboration**: Multiple users can edit simultaneously
-- **Color Palette**: Standard color selection for painting
+- **Color Palette**: 14 standard colors for painting (Red, Green, Blue, Yellow, Cyan, Magenta, White, Black, Gray, Orange, Purple, Pink, Brown, Teal)
 - **Cross-platform**: Works on iOS and Android
 - **Responsive Design**: Adapts to different screen sizes
 - **WebSocket Support**: Real-time updates for collaborative features
@@ -127,10 +162,14 @@ Once the backend is running, you can access the interactive API documentation at
 ## Usage
 
 1. **Start the app**: Run `./start.sh` or start backend and frontend separately
-2. **Navigate the canvas**: Tap squares to zoom in (up to 4 levels deep)
-3. **Paint squares**: At level 4, select a color and tap squares to paint them
-4. **Collaborate**: Multiple users can edit the same canvas simultaneously
-5. **Navigate back**: Use the navigation controls to go back or return to root
+2. **Navigate the canvas**: 
+   - Start at Level 1 (root view) with 9 sections representing 6,561 total pixels
+   - Tap any section to zoom to Level 2 (729 pixels in that section)
+   - Tap any subsection to zoom to Level 3 (81 pixels in that subsection)
+   - Tap any area to zoom to Level 4 (9 individual pixels)
+3. **Paint pixels**: Only at Level 4, select a color from the palette and tap individual pixels to paint them
+4. **Collaborate**: Multiple users can edit the same canvas simultaneously, seeing real-time updates
+5. **Navigate back**: Use the back button to return to previous levels or the home button to return to Level 1
 
 ## Development
 
