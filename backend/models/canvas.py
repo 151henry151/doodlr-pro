@@ -35,9 +35,17 @@ class CanvasManager:
         canvas_squares = []
         for square in squares:
             position = Position(square.x, square.y, CanvasLevel(square.level))
+            
+            # For higher levels, calculate dominant color from child squares
+            color = square.color
+            if level < self.max_level:
+                dominant_color = self._calculate_dominant_color(db, square.x, square.y, level)
+                # Use dominant color if available, otherwise use the square's own color
+                color = dominant_color if dominant_color else color
+            
             canvas_square = CanvasSquare(
                 position=position,
-                color=square.color,
+                color=color,
                 is_zoomable=square.is_zoomable and square.level < self.max_level
             )
             canvas_squares.append(canvas_square)
@@ -58,6 +66,43 @@ class CanvasManager:
             db.commit()
         
         return CanvasState(canvas_squares)
+    
+    def _calculate_dominant_color(self, db: Session, parent_x: int, parent_y: int, level: int) -> Optional[str]:
+        """Calculate the dominant color from child squares at the next level."""
+        if level >= self.max_level:
+            return None
+        
+        # Calculate the range of child coordinates
+        child_start_x = parent_x * 3
+        child_start_y = parent_y * 3
+        child_end_x = (parent_x + 1) * 3
+        child_end_y = (parent_y + 1) * 3
+        
+        # Get all child squares at the next level within this range
+        child_squares = db.query(DBCanvasSquare).filter(
+            DBCanvasSquare.level == level + 1,
+            DBCanvasSquare.x >= child_start_x,
+            DBCanvasSquare.x < child_end_x,
+            DBCanvasSquare.y >= child_start_y,
+            DBCanvasSquare.y < child_end_y,
+            DBCanvasSquare.color.isnot(None)
+        ).all()
+        
+        if not child_squares:
+            return None
+        
+        # Count colors
+        color_counts = {}
+        for square in child_squares:
+            color = square.color
+            color_counts[color] = color_counts.get(color, 0) + 1
+        
+        # Return the most common color
+        if color_counts:
+            dominant_color = max(color_counts, key=color_counts.get)
+            return dominant_color
+        
+        return None
     
     def _create_default_squares(self, level: int, parent_x: int = 0, parent_y: int = 0) -> List[CanvasSquare]:
         """Create default squares for a level if none exist."""

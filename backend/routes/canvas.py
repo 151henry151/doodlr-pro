@@ -47,6 +47,9 @@ async def get_canvas_root(db: Session = Depends(get_db)):
     """Get the root canvas (level 1)."""
     try:
         canvas_state = canvas_manager.get_canvas_at_level(db, 1)
+        print(f"DEBUG: Root canvas has {len(canvas_state.squares)} squares")
+        for square in canvas_state.squares:
+            print(f"DEBUG: Square ({square.position.x},{square.position.y}) has color {square.color}")
         return {
             "success": True,
             "canvas": canvas_state.to_dict(),
