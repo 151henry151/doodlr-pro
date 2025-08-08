@@ -107,15 +107,12 @@ const Canvas = () => {
           }
         }
       } else if (currentLevel === 2) {
-        const baseX = section.x * 9;
-        const baseY = section.y * 9;
+        // Use modulo mapping within each 9x9 subsection
         for (let y = 0; y < 9; y++) {
           for (let x = 0; x < 9; x++) {
-            const pixelX = baseX + x;
-            const pixelY = baseY + y;
-            const paintedPixel = section.pixels.find(p => p.x === pixelX && p.y === pixelY);
+            const paintedPixel = section.pixels.find(p => (p.x % 9) === x && (p.y % 9) === y);
             const color = paintedPixel ? paintedPixel.color : null;
-            pixelsInSection.push({ x: pixelX, y: pixelY, color, relativeX: x, relativeY: y });
+            pixelsInSection.push({ x, y, color, relativeX: x, relativeY: y });
           }
         }
       } else {
