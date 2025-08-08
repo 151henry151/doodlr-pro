@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text as RNText } from 'react-native';
 import { useCanvas } from '../context/CanvasContext';
 
 const Canvas = () => {
@@ -174,7 +174,7 @@ const Canvas = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading canvas...</Text>
+        <RNText style={styles.loadingText}>Loading canvas...</RNText>
       </View>
     );
   }
@@ -235,8 +235,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   pixel: {
-    borderWidth: 0.5,
-    borderColor: '#ddd',
+    borderWidth: 0,
   },
   loadingContainer: {
     flex: 1,
