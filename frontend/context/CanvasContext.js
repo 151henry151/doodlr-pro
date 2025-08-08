@@ -12,11 +12,13 @@ const initialState = {
   loading: false,
   error: null,
   navigationHistory: [],
-  // Track zoom path explicitly: selections at each level (local coords 0..2)
+  // Track zoom path explicitly across 5 navigation levels (L1..L5)
   zoomPath: {
-    level1: null, // {x,y} selected at level 1
-    level2: null, // {x,y} selected at level 2 (local within L1)
-    level3: null, // {x,y} selected at level 3 (local within L2)
+    level1: null,
+    level2: null,
+    level3: null,
+    level4: null,
+    level5: null,
   },
   fetchParams: { level: 1, sectionX: null, sectionY: null },
 };
@@ -72,11 +74,13 @@ const canvasReducer = (state, action) => {
     case 'SET_ZOOM_PATH':
       return { ...state, zoomPath: { ...state.zoomPath, ...action.payload } };
     case 'CLEAR_ZOOM_FROM_LEVEL': {
-      const level = action.payload; // 1,2, or 3 meaning clear that level and deeper
+      const level = action.payload; // 1..5 meaning clear that level and deeper
       const cleared = { ...state.zoomPath };
       if (level <= 1) cleared.level1 = null;
       if (level <= 2) cleared.level2 = null;
       if (level <= 3) cleared.level3 = null;
+      if (level <= 4) cleared.level4 = null;
+      if (level <= 5) cleared.level5 = null;
       return { ...state, zoomPath: cleared };
     }
     case 'SET_LAST_FETCH':
@@ -91,10 +95,6 @@ const canvasReducer = (state, action) => {
 export const CanvasProvider = ({ children }) => {
   const [state, dispatch] = useReducer(canvasReducer, initialState);
 
-  // Track the last request made to the backend for easier testing/debugging
-  // We keep it outside reducer for simplicity; store in reducer via SET_LAST_FETCH
-
-  // Load colors and initial canvas data on mount
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -133,14 +133,16 @@ export const CanvasProvider = ({ children }) => {
   const paintPixel = async (x, y, color) => {
     try {
       await canvasAPI.paintPixel(x, y, color);
-      if (state.currentLevel === 4) {
+      if (state.currentLevel === 6) {
         const fx = state.fetchParams?.sectionX ?? 0;
         const fy = state.fetchParams?.sectionY ?? 0;
-        await loadCanvasData(4, fx, fy);
+        await loadCanvasData(6, fx, fy);
       } else {
+        // Best-effort optimistic update for higher levels
+        const sectionSize = state.currentLevel === 1 ? 243 : state.currentLevel === 2 ? 81 : state.currentLevel === 3 ? 27 : state.currentLevel === 4 ? 9 : 3;
         dispatch({
           type: 'UPDATE_PIXEL',
-          payload: { x, y, color, sectionX: Math.floor(x / 27), sectionY: Math.floor(y / 27) },
+          payload: { x, y, color, sectionX: Math.floor(x / sectionSize), sectionY: Math.floor(y / sectionSize) },
         });
       }
     } catch (error) {
@@ -148,56 +150,66 @@ export const CanvasProvider = ({ children }) => {
     }
   };
 
-  // Helpers to compute global indices
-  const computeLevel2Global = (l1, local) => ({
-    x: l1.x * 3 + local.x,
-    y: l1.y * 3 + local.y,
-  });
-  const computeLevel3Global = (l1, l2, local) => ({
-    x: l1.x * 9 + l2.x * 3 + local.x,
-    y: l1.y * 9 + l2.y * 3 + local.y,
-  });
+  // Helpers to compute global indices through the hierarchy
+  const computeLevel2Global = (l1, local) => ({ x: l1.x * 3 + local.x, y: l1.y * 3 + local.y });
+  const computeLevel3Global = (l1, l2, local) => ({ x: l1.x * 9 + l2.x * 3 + local.x, y: l1.y * 9 + l2.y * 3 + local.y });
+  const computeLevel4Global = (l1, l2, l3, local) => ({ x: l1.x * 27 + l2.x * 9 + l3.x * 3 + local.x, y: l1.y * 27 + l2.y * 9 + l3.y * 3 + local.y });
+  const computeLevel5Global = (l1, l2, l3, l4, local) => ({ x: l1.x * 81 + l2.x * 27 + l3.x * 9 + l4.x * 3 + local.x, y: l1.y * 81 + l2.y * 27 + l3.y * 9 + l4.y * 3 + local.y });
 
   // Zoom to section (sectionX, sectionY are local 0..2 at current level)
   const zoomToSection = async (sectionX, sectionY) => {
     const nextLevel = state.currentLevel + 1;
-    if (nextLevel > 4) return;
+    if (nextLevel > 6) return;
 
     let targetSectionX = null;
     let targetSectionY = null;
 
     if (state.currentLevel === 1) {
-      // L1 -> L2
       const l1 = { x: sectionX, y: sectionY };
-      dispatch({ type: 'SET_ZOOM_PATH', payload: { level1: l1, level2: null, level3: null } });
+      dispatch({ type: 'SET_ZOOM_PATH', payload: { level1: l1, level2: null, level3: null, level4: null, level5: null } });
       targetSectionX = l1.x;
       targetSectionY = l1.y;
     } else if (state.currentLevel === 2) {
-      // L2 -> L3
       const l1 = state.zoomPath.level1;
       const l2Local = { x: sectionX, y: sectionY };
-      dispatch({ type: 'SET_ZOOM_PATH', payload: { level2: l2Local, level3: null } });
+      dispatch({ type: 'SET_ZOOM_PATH', payload: { level2: l2Local, level3: null, level4: null, level5: null } });
       const g2 = computeLevel2Global(l1, l2Local);
       targetSectionX = g2.x;
       targetSectionY = g2.y;
     } else if (state.currentLevel === 3) {
-      // L3 -> L4
       const l1 = state.zoomPath.level1;
       const l2 = state.zoomPath.level2;
       const l3Local = { x: sectionX, y: sectionY };
-      dispatch({ type: 'SET_ZOOM_PATH', payload: { level3: l3Local } });
+      dispatch({ type: 'SET_ZOOM_PATH', payload: { level3: l3Local, level4: null, level5: null } });
       const g3 = computeLevel3Global(l1, l2, l3Local);
       targetSectionX = g3.x;
       targetSectionY = g3.y;
+    } else if (state.currentLevel === 4) {
+      const l1 = state.zoomPath.level1;
+      const l2 = state.zoomPath.level2;
+      const l3 = state.zoomPath.level3;
+      const l4Local = { x: sectionX, y: sectionY };
+      dispatch({ type: 'SET_ZOOM_PATH', payload: { level4: l4Local, level5: null } });
+      const g4 = computeLevel4Global(l1, l2, l3, l4Local);
+      targetSectionX = g4.x;
+      targetSectionY = g4.y;
+    } else if (state.currentLevel === 5) {
+      const l1 = state.zoomPath.level1;
+      const l2 = state.zoomPath.level2;
+      const l3 = state.zoomPath.level3;
+      const l4 = state.zoomPath.level4;
+      const l5Local = { x: sectionX, y: sectionY };
+      dispatch({ type: 'SET_ZOOM_PATH', payload: { level5: l5Local } });
+      const g5 = computeLevel5Global(l1, l2, l3, l4, l5Local);
+      targetSectionX = g5.x;
+      targetSectionY = g5.y;
     }
 
-    // Save history and advance
     dispatch({ 
       type: 'ADD_TO_HISTORY', 
       payload: { level: state.currentLevel, section: state.currentSection }
     });
 
-    // For UI purposes, keep the last clicked local section
     dispatch({ type: 'SET_CURRENT_SECTION', payload: { x: sectionX, y: sectionY } });
     await loadCanvasData(nextLevel, targetSectionX, targetSectionY);
   };
@@ -209,15 +221,15 @@ export const CanvasProvider = ({ children }) => {
     const previousState = state.navigationHistory[state.navigationHistory.length - 1];
     dispatch({ type: 'REMOVE_FROM_HISTORY' });
 
-    // Adjust zoom path when stepping back
-    if (state.currentLevel === 4) {
-      // Back to L3 => clear level3 selection
+    if (state.currentLevel === 6) {
+      dispatch({ type: 'CLEAR_ZOOM_FROM_LEVEL', payload: 5 });
+    } else if (state.currentLevel === 5) {
+      dispatch({ type: 'CLEAR_ZOOM_FROM_LEVEL', payload: 4 });
+    } else if (state.currentLevel === 4) {
       dispatch({ type: 'CLEAR_ZOOM_FROM_LEVEL', payload: 3 });
     } else if (state.currentLevel === 3) {
-      // Back to L2 => clear level2 and level3
       dispatch({ type: 'CLEAR_ZOOM_FROM_LEVEL', payload: 2 });
     } else if (state.currentLevel === 2) {
-      // Back to L1 => clear all
       dispatch({ type: 'CLEAR_ZOOM_FROM_LEVEL', payload: 1 });
     }
 
@@ -227,19 +239,29 @@ export const CanvasProvider = ({ children }) => {
     if (previousState.level === 1) {
       await loadCanvasData(1);
     } else if (previousState.level === 2) {
-      const l1 = state.zoomPath.level1; // after CLEAR, this may be null; recompute from history
-      const level1 = l1 ?? previousState.section; // fallback
-      await loadCanvasData(2, level1.x, level1.y);
+      const l1 = state.zoomPath.level1 ?? previousState.section;
+      await loadCanvasData(2, l1.x, l1.y);
     } else if (previousState.level === 3) {
-      // Recompute global L2 using stored path
       const l1 = state.zoomPath.level1 ?? previousState.section;
       const l2 = state.zoomPath.level2;
-      const g2 = l2 ? computeLevel2Global(l1, l2) : { x: 0, y: 0 };
+      const g2 = computeLevel2Global(l1, l2 ?? { x: 0, y: 0 });
       await loadCanvasData(3, g2.x, g2.y);
+    } else if (previousState.level === 4) {
+      const l1 = state.zoomPath.level1 ?? previousState.section;
+      const l2 = state.zoomPath.level2 ?? { x: 0, y: 0 };
+      const l3 = state.zoomPath.level3 ?? { x: 0, y: 0 };
+      const g3 = computeLevel3Global(l1, l2, l3);
+      await loadCanvasData(4, g3.x, g3.y);
+    } else if (previousState.level === 5) {
+      const l1 = state.zoomPath.level1 ?? previousState.section;
+      const l2 = state.zoomPath.level2 ?? { x: 0, y: 0 };
+      const l3 = state.zoomPath.level3 ?? { x: 0, y: 0 };
+      const l4 = state.zoomPath.level4 ?? { x: 0, y: 0 };
+      const g4 = computeLevel4Global(l1, l2, l3, l4);
+      await loadCanvasData(5, g4.x, g4.y);
     }
   };
 
-  // Go to root (Level 1)
   const goToRoot = async () => {
     dispatch({ type: 'SET_CURRENT_SECTION', payload: { x: 0, y: 0 } });
     dispatch({ type: 'SET_CURRENT_LEVEL', payload: 1 });
@@ -248,7 +270,6 @@ export const CanvasProvider = ({ children }) => {
     await loadCanvasData(1);
   };
 
-  // Select drawing color
   const selectColor = (color) => {
     dispatch({ type: 'SET_SELECTED_COLOR', payload: color });
   };

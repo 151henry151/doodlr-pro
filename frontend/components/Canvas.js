@@ -42,26 +42,38 @@ const Canvas = () => {
     return screenWidth / gridSize;
   };
 
+  const getPerSectionPixelCount = () => {
+    // Number of micro-cells rendered per section edge at each level
+    // L1: 81, L2: 27, L3: 27, L4: 9, L5: 3
+    if (currentLevel === 1) return 81;
+    if (currentLevel === 2) return 27;
+    if (currentLevel === 3) return 27;
+    if (currentLevel === 4) return 9;
+    if (currentLevel === 5) return 3;
+    return 1; // L6
+  };
+
+  const getModuloForLevel = () => {
+    // Modulo used to place painted pixels within a section at each level (except L6)
+    if (currentLevel === 1) return 81;
+    if (currentLevel === 2) return 27;
+    if (currentLevel === 3) return 27;
+    if (currentLevel === 4) return 9;
+    if (currentLevel === 5) return 3;
+    return 1;
+  };
+
   const getPixelSize = () => {
     const sectionSize = getSectionSize();
-    
-    if (currentLevel === 1) {
-      return sectionSize / 27;
-    } else if (currentLevel === 2) {
-      return sectionSize / 9;
-    } else if (currentLevel === 3) {
-      return sectionSize / 3;
-    } else {
-      // Level 4: one pixel per section -> pixel fills the section
-      return sectionSize;
-    }
+    const perEdge = getPerSectionPixelCount();
+    return sectionSize / perEdge;
   };
 
   const renderSection = (section) => {
     const sectionSize = getSectionSize();
     
-    if (currentLevel === 4) {
-      // Level 4: each section represents exactly ONE global pixel.
+    if (currentLevel === 6) {
+      // Level 6: each section represents exactly ONE global pixel.
       const pixelSize = getPixelSize();
       const globalX = (fetchParams?.sectionX ?? 0) * 3 + section.x;
       const globalY = (fetchParams?.sectionY ?? 0) * 3 + section.y;
@@ -77,7 +89,7 @@ const Canvas = () => {
           ]}
         >
           <TouchableOpacity
-            testID={`l4-pixel-${section.x}-${section.y}`}
+            testID={`l6-pixel-${section.x}-${section.y}`}
             style={[
               styles.pixel,
               {
@@ -91,38 +103,16 @@ const Canvas = () => {
         </View>
       );
     } else {
-      // Levels 1, 2, 3: Navigation levels (clickable sections with blue borders)
+      // Levels 1..5: Navigation levels (clickable sections with blue borders)
       const pixelsInSection = [];
-      
-      if (currentLevel === 1) {
-        const baseX = section.x * 27;
-        const baseY = section.y * 27;
-        for (let y = 0; y < 27; y++) {
-          for (let x = 0; x < 27; x++) {
-            const pixelX = baseX + x;
-            const pixelY = baseY + y;
-            const paintedPixel = section.pixels.find(p => p.x === pixelX && p.y === pixelY);
-            const color = paintedPixel ? paintedPixel.color : null;
-            pixelsInSection.push({ x: pixelX, y: pixelY, color, relativeX: x, relativeY: y });
-          }
-        }
-      } else if (currentLevel === 2) {
-        // Use modulo mapping within each 9x9 subsection
-        for (let y = 0; y < 9; y++) {
-          for (let x = 0; x < 9; x++) {
-            const paintedPixel = section.pixels.find(p => (p.x % 9) === x && (p.y % 9) === y);
-            const color = paintedPixel ? paintedPixel.color : null;
-            pixelsInSection.push({ x, y, color, relativeX: x, relativeY: y });
-          }
-        }
-      } else {
-        // Level 3: Render 9 pixels (3x3) within each section using local modulo mapping
-        for (let y = 0; y < 3; y++) {
-          for (let x = 0; x < 3; x++) {
-            const paintedPixel = section.pixels.find(p => (p.x % 3) === x && (p.y % 3) === y);
-            const color = paintedPixel ? paintedPixel.color : null;
-            pixelsInSection.push({ x, y, color, relativeX: x, relativeY: y });
-          }
+      const perEdge = getPerSectionPixelCount();
+      const modulo = getModuloForLevel();
+
+      for (let y = 0; y < perEdge; y++) {
+        for (let x = 0; x < perEdge; x++) {
+          const paintedPixel = section.pixels.find(p => (p.x % modulo) === x && (p.y % modulo) === y);
+          const color = paintedPixel ? paintedPixel.color : null;
+          pixelsInSection.push({ x, y, color, relativeX: x, relativeY: y });
         }
       }
       
