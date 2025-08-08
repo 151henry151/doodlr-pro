@@ -43,8 +43,6 @@ const Canvas = () => {
   };
 
   const getPerSectionPixelCount = () => {
-    // Number of micro-cells rendered per section edge at each level
-    // L1: 81, L2: 27, L3: 27, L4: 9, L5: 3
     if (currentLevel === 1) return 81;
     if (currentLevel === 2) return 27;
     if (currentLevel === 3) return 27;
@@ -54,7 +52,6 @@ const Canvas = () => {
   };
 
   const getModuloForLevel = () => {
-    // Modulo used to place painted pixels within a section at each level (except L6)
     if (currentLevel === 1) return 81;
     if (currentLevel === 2) return 27;
     if (currentLevel === 3) return 27;
@@ -73,7 +70,6 @@ const Canvas = () => {
     const sectionSize = getSectionSize();
     
     if (currentLevel === 6) {
-      // Level 6: each section represents exactly ONE global pixel.
       const pixelSize = getPixelSize();
       const globalX = (fetchParams?.sectionX ?? 0) * 3 + section.x;
       const globalY = (fetchParams?.sectionY ?? 0) * 3 + section.y;
@@ -103,23 +99,18 @@ const Canvas = () => {
         </View>
       );
     } else {
-      // Levels 1..5: Navigation levels (clickable sections with blue borders)
-      const pixelsInSection = [];
-      const perEdge = getPerSectionPixelCount();
+      // Levels 1..5: Render only painted pixels using modulo mapping
       const modulo = getModuloForLevel();
-
-      for (let y = 0; y < perEdge; y++) {
-        for (let x = 0; x < perEdge; x++) {
-          const paintedPixel = section.pixels.find(p => (p.x % modulo) === x && (p.y % modulo) === y);
-          const color = paintedPixel ? paintedPixel.color : null;
-          pixelsInSection.push({ x, y, color, relativeX: x, relativeY: y });
-        }
-      }
-      
-      console.log(`Level ${currentLevel}, Section (${section.x}, ${section.y}): ${pixelsInSection.length} pixels`);
-      
       const pixelSize = getPixelSize();
-      
+
+      // Build a map of relative cells -> color (last one wins)
+      const occupied = new Map();
+      for (const p of section.pixels || []) {
+        const rx = ((p.x % modulo) + modulo) % modulo;
+        const ry = ((p.y % modulo) + modulo) % modulo;
+        occupied.set(`${rx}-${ry}`, p.color);
+      }
+
       return (
         <TouchableOpacity
           key={`${section.x}-${section.y}`}
@@ -136,22 +127,25 @@ const Canvas = () => {
           onPress={() => zoomToSection(section.x, section.y)}
         >
           <View style={styles.pixelGrid}>
-            {pixelsInSection.map((pixel) => (
-              <View
-                key={`${pixel.relativeX}-${pixel.relativeY}`}
-                style={[
-                  styles.pixel,
-                  {
-                    width: pixelSize,
-                    height: pixelSize,
-                    backgroundColor: pixel.color ? colorMap[pixel.color] : '#f0f0f0',
-                    position: 'absolute',
-                    left: pixel.relativeX * pixelSize,
-                    top: pixel.relativeY * pixelSize,
-                  },
-                ]}
-              />
-            ))}
+            {Array.from(occupied.entries()).map(([key, color]) => {
+              const [rx, ry] = key.split('-').map(Number);
+              return (
+                <View
+                  key={key}
+                  style={[
+                    styles.pixel,
+                    {
+                      width: pixelSize,
+                      height: pixelSize,
+                      backgroundColor: color ? colorMap[color] : '#f0f0f0',
+                      position: 'absolute',
+                      left: rx * pixelSize,
+                      top: ry * pixelSize,
+                    },
+                  ]}
+                />
+              );
+            })}
           </View>
         </TouchableOpacity>
       );
@@ -220,6 +214,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'relative',
+    backgroundColor: '#f0f0f0',
   },
   pixel: {
     borderWidth: 0,
