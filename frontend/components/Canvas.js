@@ -120,8 +120,9 @@ const Canvas = () => {
             {
               width: sectionSize,
               height: sectionSize,
-              borderWidth: 2,
-              borderColor: '#007AFF',
+              borderWidth: 0.5,
+              borderColor: 'rgba(0,0,0,0.12)',
+              borderStyle: 'dotted',
             },
           ]}
           onPress={() => zoomToSection(section.x, section.y)}
@@ -205,8 +206,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   section: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
