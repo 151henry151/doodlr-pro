@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useCanvas } from '../context/CanvasContext';
 
 const Canvas = () => {
@@ -203,7 +203,6 @@ const Canvas = () => {
 
   return (
     <View style={styles.container}>
-      <Text accessibilityRole="text" testID="debug-label">Level {currentLevel} - sel ({currentSection.x},{currentSection.y})</Text>
       <View style={styles.canvas}>
         {renderGrid()}
       </View>
