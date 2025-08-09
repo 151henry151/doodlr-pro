@@ -7,6 +7,9 @@
       "android": {
         "buildType": "apk"
       },
+      "ios": {
+        "distribution": "internal"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://your-backend.example.com"
       }
@@ -15,6 +18,9 @@
       "android": {
         "gradleCommand": ":app:bundleRelease",
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "autoIncrement": true
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://your-backend.example.com"
