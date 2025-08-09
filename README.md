@@ -20,26 +20,22 @@ Doodlr is a collaborative, zoomable pixel-art canvas with a 6-level hierarchical
 - Python 3.8+
 - Node.js 18+ and npm
 
-### Quick start
-Use the script that handles both backend and frontend:
-
+### Start the backend only
 ```bash
-bash ./start.sh
+bash ./start-backend.sh
 ```
-
-Notes:
-- The script runs Expo in the foreground so you can use keys like `w` (open web), `s` (switch build), `r` (reload).
-- The backend starts on `http://localhost:8000`. API docs are available at `/docs` if enabled.
+The backend will run at `http://localhost:8000`.
 
 If port 8000 is in use:
 ```bash
 lsof -ti:8000 | xargs -r kill
 ```
 
-### Simple start (no health checks)
+### Start the frontend only (Expo)
 ```bash
-bash ./start-simple.sh
+bash ./start-frontend.sh
 ```
+Expo will start in the foreground so you can use keys like `w` (open web), `s` (switch build), `r` (reload).
 
 ## Project Structure
 - `backend/`: FastAPI app, models, and routes
@@ -62,7 +58,6 @@ bash ./start-simple.sh
 - Webpack dev server serves at `http://localhost:19006`
 
 ## Development Notes
-- Expo now runs in the foreground from `start.sh` to accept keyboard input.
 - Section grid lines have slightly increased contrast for visibility.
 - Pixel positions are aggregated per true section span to remain consistent across zoom levels.
 
