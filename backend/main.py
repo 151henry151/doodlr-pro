@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import canvas
+from fastapi.staticfiles import StaticFiles
+import os
 
 app = FastAPI(
     title="Doodlr API",
@@ -19,6 +21,11 @@ app.add_middleware(
 
 # Include routers
 app.include_router(canvas.router)
+
+# Serve static marketing site for local development under /site
+WEBSITE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "website"))
+if os.path.isdir(WEBSITE_DIR):
+    app.mount("/site", StaticFiles(directory=WEBSITE_DIR, html=True), name="site")
 
 @app.get("/")
 async def root():
