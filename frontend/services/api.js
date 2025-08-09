@@ -1,6 +1,33 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+function resolveApiBaseUrl() {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    return envUrl.trim();
+  }
+
+  // Attempt to derive LAN host from Expo dev server info when running on device
+  try {
+    const hostUri = (Constants?.expoConfig && Constants.expoConfig.hostUri)
+      || (Constants?.manifest && Constants.manifest.debuggerHost)
+      || null;
+
+    if (hostUri && Platform.OS !== 'web') {
+      const host = hostUri.split(':')[0];
+      if (host) {
+        return `http://${host}:8000`;
+      }
+    }
+  } catch (e) {
+    // Ignore and fall through to localhost
+  }
+
+  return 'http://localhost:8000';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -21,6 +48,7 @@ export const canvasAPI = {
     let url = `/level/${level}`;
     if (sectionX !== null && sectionY !== null) {
       url += `?section_x=${sectionX}&section_y=${sectionY}`;
+      
     }
     const response = await api.get(url);
     return response.data;
