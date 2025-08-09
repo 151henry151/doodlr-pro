@@ -116,14 +116,14 @@ def _render_svg(level: int, section_x: int, section_y: int, db: Session) -> str:
     base = _level_base_section_size(level)
     stroke = 'rgba(0,0,0,0.35)'
     dash = '1,2'
-    # Vertical lines
+    # Vertical lines (constant on-screen thickness)
     for i in range(1, 3):
         x = i * base
-        svg_parts.append(f'<line x1="{x}" y1="0" x2="{x}" y2="{span_y}" stroke="{stroke}" stroke-width="0.5" stroke-dasharray="{dash}" />')
-    # Horizontal lines
+        svg_parts.append(f'<line x1="{x}" y1="0" x2="{x}" y2="{span_y}" stroke="{stroke}" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="3,3" shape-rendering="crispEdges" />')
+    # Horizontal lines (constant on-screen thickness)
     for i in range(1, 3):
         y = i * base
-        svg_parts.append(f'<line x1="0" y1="{y}" x2="{span_x}" y2="{y}" stroke="{stroke}" stroke-width="0.5" stroke-dasharray="{dash}" />')
+        svg_parts.append(f'<line x1="0" y1="{y}" x2="{span_x}" y2="{y}" stroke="{stroke}" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="3,3" shape-rendering="crispEdges" />')
 
     svg_parts.append('</svg>')
     return ''.join(svg_parts)
