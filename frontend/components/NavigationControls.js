@@ -74,35 +74,25 @@ const NavigationControls = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.button, currentLevel === 1 && styles.disabledButton]}
-        onPress={navigateBack}
-        disabled={currentLevel === 1}
-      >
-        <RNText style={[styles.buttonText, currentLevel === 1 && styles.disabledText]}>
-          Back
-        </RNText>
-      </TouchableOpacity>
+      <View style={styles.controlsRow}>
+        <TouchableOpacity
+          style={[styles.button, currentLevel === 1 && styles.disabledButton]}
+          onPress={navigateBack}
+          disabled={currentLevel === 1}
+        >
+          <RNText style={[styles.buttonText, currentLevel === 1 && styles.disabledText]}>
+            Back
+          </RNText>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={goToRoot}>
-        <RNText style={styles.buttonText}>Home</RNText>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={goToRoot}>
+          <RNText style={styles.buttonText}>Home</RNText>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={openReport}>
-        <RNText style={styles.buttonText}>Report</RNText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openPrivacy}>
-        <RNText style={styles.buttonText}>Privacy</RNText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openTerms}>
-        <RNText style={styles.buttonText}>Terms</RNText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openLegal}>
-        <RNText style={styles.buttonText}>Conduct</RNText>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={openReport}>
+          <RNText style={styles.buttonText}>Report</RNText>
+        </TouchableOpacity>
+      </View>
 
       <RNText style={styles.levelText}>Level {currentLevel}</RNText>
 
@@ -116,6 +106,14 @@ const NavigationControls = () => {
           <RNText style={styles.feedbackText}>{bannerMessage}</RNText>
         </View>
       )}
+
+      <View style={styles.footerLinks}>
+        <RNText style={styles.linkText} accessibilityRole="link" onPress={openPrivacy}>Privacy</RNText>
+        <RNText style={styles.separator}> · </RNText>
+        <RNText style={styles.linkText} accessibilityRole="link" onPress={openTerms}>Terms</RNText>
+        <RNText style={styles.separator}> · </RNText>
+        <RNText style={styles.linkText} accessibilityRole="link" onPress={openLegal}>Conduct</RNText>
+      </View>
 
       <Modal
         visible={isReportOpen}
@@ -161,13 +159,15 @@ const NavigationControls = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    padding: 20,
+    padding: 16,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
   },
@@ -200,9 +200,27 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   levelText: {
+    marginTop: 8,
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
     color: '#333',
+  },
+  footerLinks: {
+    marginTop: 6,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#007AFF',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
+  separator: {
+    color: '#999',
+    fontSize: 13,
+    marginHorizontal: 6,
   },
   feedbackBanner: {
     width: '100%',
