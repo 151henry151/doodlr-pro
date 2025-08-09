@@ -1,10 +1,14 @@
-import React from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, Linking, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, Linking, Platform, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useCanvas } from '../context/CanvasContext';
 import { getApiBaseUrl } from '../services/api';
 
 const NavigationControls = () => {
   const { currentLevel, navigateBack, goToRoot, fetchParams } = useCanvas();
+
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportText, setReportText] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const openLegal = async () => {
     const url = 'https://hromp.com/doodlr/conduct.html';
@@ -21,16 +25,29 @@ const NavigationControls = () => {
     try { await Linking.openURL(url); } catch {}
   };
 
-  const reportHere = async () => {
+  const submitReport = async () => {
     try {
+      setIsSubmittingReport(true);
       const base = getApiBaseUrl();
       const level = currentLevel;
-      const x = (fetchParams?.sectionX ?? 0) * 3; // coarse location
+      const x = (fetchParams?.sectionX ?? 0) * 3;
       const y = (fetchParams?.sectionY ?? 0) * 3;
-      const params = new URLSearchParams({ level: String(level), x: String(x), y: String(y), reason: 'user_report' });
+      const reason = (reportText || '').trim().slice(0, 500) || 'user_report';
+      const params = new URLSearchParams({ level: String(level), x: String(x), y: String(y), reason });
       await fetch(`${base}/report?${params.toString()}`, { method: 'POST' });
-      if (Platform.OS === 'web') alert('Reported. Thank you.');
-    } catch (e) { if (Platform.OS === 'web') alert('Report failed'); }
+      setIsReportOpen(false);
+      setReportText('');
+      if (Platform.OS === 'web') alert('Report submitted. Thank you.');
+    } catch (e) {
+      if (Platform.OS === 'web') alert('Report failed');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  const openReport = () => {
+    setReportText('');
+    setIsReportOpen(true);
   };
 
   return (
@@ -49,7 +66,7 @@ const NavigationControls = () => {
         <RNText style={styles.buttonText}>Home</RNText>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={reportHere}>
+      <TouchableOpacity style={styles.button} onPress={openReport}>
         <RNText style={styles.buttonText}>Report</RNText>
       </TouchableOpacity>
 
@@ -66,6 +83,45 @@ const NavigationControls = () => {
       </TouchableOpacity>
 
       <RNText style={styles.levelText}>Level {currentLevel}</RNText>
+
+      <Modal
+        visible={isReportOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsReportOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <RNText style={styles.modalTitle}>Report Content</RNText>
+            <RNText style={styles.modalSubtitle}>Please describe the content or problem:</RNText>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Describe what you see (required)"
+              placeholderTextColor="#888"
+              value={reportText}
+              onChangeText={setReportText}
+              autoFocus
+              multiline
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => setIsReportOpen(false)} disabled={isSubmittingReport}>
+                <RNText style={styles.secondaryText}>Cancel</RNText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, !reportText.trim() && styles.disabledButton]}
+                onPress={submitReport}
+                disabled={!reportText.trim() || isSubmittingReport}
+              >
+                {isSubmittingReport ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <RNText style={styles.buttonText}>Submit Report</RNText>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -91,11 +147,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 4,
   },
+  secondaryButton: {
+    backgroundColor: '#eee',
+  },
   disabledButton: {
     backgroundColor: '#ccc',
   },
   buttonText: {
     color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  secondaryText: {
+    color: '#333',
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -106,6 +170,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 480,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#444',
+  },
+  textInput: {
+    minHeight: 96,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    color: '#111',
+    textAlignVertical: 'top',
+    backgroundColor: '#fafafa',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
   },
 });
 
