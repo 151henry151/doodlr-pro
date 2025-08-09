@@ -11,6 +11,16 @@ const NavigationControls = () => {
     try { await Linking.openURL(url); } catch {}
   };
 
+  const openPrivacy = async () => {
+    const url = 'https://hromp.com/doodlr/privacy.html';
+    try { await Linking.openURL(url); } catch {}
+  };
+
+  const openTerms = async () => {
+    const url = 'https://hromp.com/doodlr/terms.html';
+    try { await Linking.openURL(url); } catch {}
+  };
+
   const reportHere = async () => {
     try {
       const base = getApiBaseUrl();
@@ -43,8 +53,16 @@ const NavigationControls = () => {
         <RNText style={styles.buttonText}>Report</RNText>
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.button} onPress={openPrivacy}>
+        <RNText style={styles.buttonText}>Privacy</RNText>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={openTerms}>
+        <RNText style={styles.buttonText}>Terms</RNText>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.button} onPress={openLegal}>
-        <RNText style={styles.buttonText}>About/Legal</RNText>
+        <RNText style={styles.buttonText}>Conduct</RNText>
       </TouchableOpacity>
 
       <RNText style={styles.levelText}>Level {currentLevel}</RNText>
@@ -61,21 +79,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   button: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
     minWidth: 80,
     alignItems: 'center',
+    marginVertical: 4,
   },
   disabledButton: {
     backgroundColor: '#ccc',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   disabledText: {
