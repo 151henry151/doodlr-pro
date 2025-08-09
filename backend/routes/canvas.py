@@ -8,6 +8,9 @@ from models.canvas import CanvasModel, PixelData, CanvasSection, PaintRequest, Z
 
 router = APIRouter()
 
+# In-memory reports store (simple MVP; replace with DB later)
+REPORTS: List[dict] = []
+
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
@@ -447,3 +450,30 @@ async def websocket_endpoint(websocket: WebSocket):
             await manager.send_personal_message(f"Message text was: {data}", websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket) 
+
+@router.post("/report")
+async def report_content(level: int, x: int, y: int, reason: str = "unspecified"):
+    REPORTS.append({
+        "id": len(REPORTS) + 1,
+        "level": level,
+        "x": x,
+        "y": y,
+        "reason": reason,
+        "created_at": datetime.utcnow().isoformat() + "Z",
+    })
+    return {"message": "Report received"}
+
+@router.get("/admin/reports")
+async def list_reports():
+    return {"reports": REPORTS}
+
+@router.post("/admin/clear")
+async def admin_clear_canvas(db: Session = Depends(get_db)):
+    # Danger: clear all pixels
+    db.query(Canvas).delete()
+    db.commit()
+    # Reset reports as content is cleared
+    REPORTS.clear()
+    # Notify clients (optional)
+    await manager.broadcast("{\"type\": \"canvas_cleared\"}")
+    return {"message": "Canvas cleared"} 

@@ -1,9 +1,27 @@
 import React from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, Linking, Platform } from 'react-native';
 import { useCanvas } from '../context/CanvasContext';
+import { getApiBaseUrl } from '../services/api';
 
 const NavigationControls = () => {
-  const { currentLevel, navigateBack, goToRoot } = useCanvas();
+  const { currentLevel, navigateBack, goToRoot, fetchParams } = useCanvas();
+
+  const openLegal = async () => {
+    const url = 'https://hromp.com/doodlr/conduct.html';
+    try { await Linking.openURL(url); } catch {}
+  };
+
+  const reportHere = async () => {
+    try {
+      const base = getApiBaseUrl();
+      const level = currentLevel;
+      const x = (fetchParams?.sectionX ?? 0) * 3; // coarse location
+      const y = (fetchParams?.sectionY ?? 0) * 3;
+      const params = new URLSearchParams({ level: String(level), x: String(x), y: String(y), reason: 'user_report' });
+      await fetch(`${base}/report?${params.toString()}`, { method: 'POST' });
+      if (Platform.OS === 'web') alert('Reported. Thank you.');
+    } catch (e) { if (Platform.OS === 'web') alert('Report failed'); }
+  };
 
   return (
     <View style={styles.container}>
@@ -17,11 +35,16 @@ const NavigationControls = () => {
         </RNText>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={goToRoot}
-      >
+      <TouchableOpacity style={styles.button} onPress={goToRoot}>
         <RNText style={styles.buttonText}>Home</RNText>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={reportHere}>
+        <RNText style={styles.buttonText}>Report</RNText>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={openLegal}>
+        <RNText style={styles.buttonText}>About/Legal</RNText>
       </TouchableOpacity>
 
       <RNText style={styles.levelText}>Level {currentLevel}</RNText>

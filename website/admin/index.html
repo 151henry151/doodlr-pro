@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doodlr — Admin</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <script>
+    async function clearCanvas() {
+      if (!confirm('Clear entire canvas? This cannot be undone.')) return;
+      try {
+        const res = await fetch('/admin/clear', { method: 'POST' });
+        if (!res.ok) throw new Error('Failed');
+        alert('Canvas cleared');
+        loadReports();
+      } catch (e) {
+        alert('Error clearing canvas');
+      }
+    }
+    async function loadReports() {
+      try {
+        const res = await fetch('/admin/reports');
+        const data = await res.json();
+        const list = document.getElementById('reports');
+        list.innerHTML = '';
+        if (!data || !data.reports || data.reports.length === 0) {
+          list.innerHTML = '<li>No reports.</li>';
+          return;
+        }
+        for (const r of data.reports) {
+          const li = document.createElement('li');
+          li.textContent = `#${r.id} at (${r.x},${r.y}) level ${r.level} reason: ${r.reason} · ${new Date(r.created_at).toLocaleString()}`;
+          list.appendChild(li);
+        }
+      } catch (e) {
+        document.getElementById('reports').innerHTML = '<li>Error loading reports</li>';
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadReports);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">Doodlr Admin</div>
+      <nav class="nav">
+        <a href="../index.html">Site</a>
+        <a href="../app/">Web App</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Administration</h1>
+        <div class="actions">
+          <a class="button" onclick="clearCanvas()">Clear Canvas</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>User Reports</h2>
+        <ul id="reports"></ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div>© 2025 Doodlr</div>
+    </footer>
+  </div>
+</body>
+</html> 

@@ -15,12 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hromp.doodlr",
+      "bundleIdentifier": "com.romp.doodlr",
       "buildNumber": "1.0.0",
       "infoPlist": {
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
-        }
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -29,7 +27,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.hromp.doodlr",
+      "package": "com.romp.doodlr",
       "versionCode": 1
     },
     "web": {
@@ -38,6 +36,12 @@
     "extra": {
       "eas": {
         "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      },
+      "links": {
+        "privacy": "https://hromp.com/doodlr/privacy.html",
+        "terms": "https://hromp.com/doodlr/terms.html",
+        "website": "https://hromp.com/doodlr/",
+        "webapp": "https://hromp.com/doodlr/app/"
       }
     }
   }
