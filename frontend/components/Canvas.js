@@ -51,13 +51,14 @@ const Canvas = () => {
     return 1; // L6
   };
 
-  const getModuloForLevel = () => {
-    if (currentLevel === 1) return 81;
-    if (currentLevel === 2) return 27;
-    if (currentLevel === 3) return 27;
-    if (currentLevel === 4) return 9;
-    if (currentLevel === 5) return 3;
-    return 1;
+  // True underlying pixel span per section at each level (matches backend model)
+  const getSectionPixelSpan = () => {
+    if (currentLevel === 1) return 243; // Level 1 section is 243x243 pixels
+    if (currentLevel === 2) return 81;  // Level 2 section is 81x81 pixels
+    if (currentLevel === 3) return 27;  // Level 3 section is 27x27 pixels
+    if (currentLevel === 4) return 9;   // Level 4 section is 9x9 pixels
+    if (currentLevel === 5) return 3;   // Level 5 section is 3x3 pixels
+    return 1;                           // Level 6 is a single pixel
   };
 
   const getPixelSize = () => {
@@ -99,15 +100,20 @@ const Canvas = () => {
         </View>
       );
     } else {
-      // Levels 1..5: Render only painted pixels using modulo mapping
-      const modulo = getModuloForLevel();
+      // Levels 1..5: Render only painted pixels by aggregating to the visible grid
+      const sectionPixelSpan = getSectionPixelSpan();
+      const visiblePerEdge = getPerSectionPixelCount();
+      const groupSize = Math.max(1, Math.floor(sectionPixelSpan / visiblePerEdge)); // e.g., 243->81 groups of 3
       const pixelSize = getPixelSize();
 
       // Build a map of relative cells -> color (last one wins)
       const occupied = new Map();
       for (const p of section.pixels || []) {
-        const rx = ((p.x % modulo) + modulo) % modulo;
-        const ry = ((p.y % modulo) + modulo) % modulo;
+        // Compute local coordinates within this section's true pixel span
+        const localX = ((p.x % sectionPixelSpan) + sectionPixelSpan) % sectionPixelSpan;
+        const localY = ((p.y % sectionPixelSpan) + sectionPixelSpan) % sectionPixelSpan;
+        const rx = Math.floor(localX / groupSize);
+        const ry = Math.floor(localY / groupSize);
         occupied.set(`${rx}-${ry}`, p.color);
       }
 
@@ -121,7 +127,7 @@ const Canvas = () => {
               width: sectionSize,
               height: sectionSize,
               borderWidth: 0.5,
-              borderColor: 'rgba(0,0,0,0.12)',
+              borderColor: 'rgba(0,0,0,0.35)',
               borderStyle: 'dotted',
             },
           ]}
@@ -201,6 +207,8 @@ const styles = StyleSheet.create({
   },
   canvas: {
     flexDirection: 'column',
+    borderWidth: 2,
+    borderColor: '#bdbdbd'
   },
   row: {
     flexDirection: 'row',

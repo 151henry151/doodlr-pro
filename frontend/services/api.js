@@ -53,4 +53,3 @@ export const canvasAPI = {
   },
 };
 
-export default api; 

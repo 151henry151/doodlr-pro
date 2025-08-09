@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+
+# Node / Expo
+node_modules/
+frontend/node_modules/
+.expo/
+frontend/.expo/
+.expo-shared/
+dist/
+build/
+web-build/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local database
+backend/doodlr.db
+
+# IDE
+.vscode/
+.idea/ 
