@@ -28,6 +28,7 @@ function resolveApiBaseUrl() {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
+export const getApiBaseUrl = () => API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -43,7 +44,7 @@ export const canvasAPI = {
     return response.data;
   },
 
-  // Get canvas at specific level
+  // Get canvas at specific level (JSON)
   getCanvasLevel: async (level, sectionX = null, sectionY = null) => {
     let url = `/level/${level}`;
     if (sectionX !== null && sectionY !== null) {
@@ -51,6 +52,16 @@ export const canvasAPI = {
       
     }
     const response = await api.get(url);
+    return response.data;
+  },
+
+  // Get rendered SVG for levels 1..5
+  getRenderedSvg: async (level, sectionX = null, sectionY = null) => {
+    let url = `/render/${level}`;
+    if (sectionX !== null && sectionY !== null) {
+      url += `?section_x=${sectionX}&section_y=${sectionY}`;
+    }
+    const response = await api.get(url, { responseType: 'text' });
     return response.data;
   },
 

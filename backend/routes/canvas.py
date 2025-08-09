@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 from database import get_db, Canvas
 from models.canvas import CanvasModel, PixelData, CanvasSection, PaintRequest, ZoomRequest
 
@@ -31,6 +32,119 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+# --- SVG rendering helpers ---
+
+def _level_base_section_size(level: int) -> int:
+    if level == 1:
+        return CanvasModel.LEVEL1_SECTION_SIZE
+    if level == 2:
+        return CanvasModel.LEVEL2_SECTION_SIZE
+    if level == 3:
+        return CanvasModel.LEVEL3_SECTION_SIZE
+    if level == 4:
+        return CanvasModel.LEVEL4_SECTION_SIZE
+    if level == 5:
+        return CanvasModel.LEVEL5_SECTION_SIZE
+    return 1
+
+
+def _area_bounds_for_level(level: int, section_x: int = None, section_y: int = None) -> Tuple[int, int, int, int]:
+    """Return (start_x, start_y, span_x, span_y) covering the 3x3 grid shown at the given level."""
+    if level < 1 or level > 6:
+        raise HTTPException(status_code=400, detail="Level must be between 1 and 6")
+
+    if level == 1:
+        base = CanvasModel.LEVEL1_SECTION_SIZE
+        return 0, 0, base * 3, base * 3
+
+    # For levels 2..5 section_x/y are required and indicate the parent section at the previous level
+    parent_size = _level_base_section_size(level - 1)
+    if section_x is None or section_y is None:
+        raise HTTPException(status_code=400, detail="section_x and section_y required for this level")
+    start_x = section_x * parent_size
+    start_y = section_y * parent_size
+    base = _level_base_section_size(level)
+    return start_x, start_y, base * 3, base * 3
+
+
+def _color_to_hex(color: str) -> str:
+    mapping = {
+        "red": "#FF0000",
+        "green": "#00FF00",
+        "blue": "#0000FF",
+        "yellow": "#FFFF00",
+        "cyan": "#00FFFF",
+        "magenta": "#FF00FF",
+        "white": "#FFFFFF",
+        "black": "#000000",
+        "gray": "#808080",
+        "orange": "#FFA500",
+        "purple": "#800080",
+        "pink": "#FFC0CB",
+        "brown": "#A52A2A",
+        "teal": "#008080",
+    }
+    return mapping.get(color, "#000000")
+
+
+def _render_svg(level: int, section_x: int, section_y: int, db: Session) -> str:
+    start_x, start_y, span_x, span_y = _area_bounds_for_level(level, section_x, section_y)
+
+    # Query a single window for all pixels to be drawn
+    pixels = db.query(Canvas).filter(
+        Canvas.x >= start_x,
+        Canvas.x <= start_x + span_x - 1,
+        Canvas.y >= start_y,
+        Canvas.y <= start_y + span_y - 1,
+    ).all()
+
+    # SVG header with viewBox matching the pixel span (1 unit per pixel)
+    svg_parts: List[str] = []
+    svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {span_x} {span_y}">')
+
+    # Background
+    svg_parts.append('<rect x="0" y="0" width="100%" height="100%" fill="#f0f0f0"/>')
+
+    # Draw painted pixels (single-unit rects)
+    for p in pixels:
+        lx = p.x - start_x
+        ly = p.y - start_y
+        color = _color_to_hex(p.color)
+        svg_parts.append(f'<rect x="{lx}" y="{ly}" width="1" height="1" fill="{color}" />')
+
+    # Grid lines for 3x3 sections
+    base = _level_base_section_size(level)
+    stroke = 'rgba(0,0,0,0.35)'
+    dash = '1,2'
+    # Vertical lines
+    for i in range(1, 3):
+        x = i * base
+        svg_parts.append(f'<line x1="{x}" y1="0" x2="{x}" y2="{span_y}" stroke="{stroke}" stroke-width="0.5" stroke-dasharray="{dash}" />')
+    # Horizontal lines
+    for i in range(1, 3):
+        y = i * base
+        svg_parts.append(f'<line x1="0" y1="{y}" x2="{span_x}" y2="{y}" stroke="{stroke}" stroke-width="0.5" stroke-dasharray="{dash}" />')
+
+    svg_parts.append('</svg>')
+    return ''.join(svg_parts)
+
+
+@router.get("/render/{level}")
+async def render_level(level: int, section_x: int = None, section_y: int = None, db: Session = Depends(get_db)):
+    if level < 1 or level > 6:
+        raise HTTPException(status_code=400, detail="Level must be between 1 and 6")
+    if level == 1:
+        # section parameters are ignored at level 1
+        svg = _render_svg(1, 0, 0, db)
+        return Response(content=svg, media_type="image/svg+xml")
+    if level == 6:
+        raise HTTPException(status_code=400, detail="Rendering endpoint is for levels 1..5")
+    if section_x is None or section_y is None:
+        raise HTTPException(status_code=400, detail="section_x and section_y required for this level")
+    svg = _render_svg(level, section_x, section_y, db)
+    return Response(content=svg, media_type="image/svg+xml")
+
+# Existing JSON endpoints
 @router.get("/")
 async def get_root_canvas(db: Session = Depends(get_db)):
     """Get the root canvas (Level 1) - shows all 531,441 pixels via 9 sections"""
@@ -292,7 +406,7 @@ async def paint_pixel(request: PaintRequest, db: Session = Depends(get_db)):
     
     db.commit()
     
-    # Broadcast update to all connected clients
+    # Broadcast update to all connected clients (frontend throttles fetch to ~1/s)
     update_message = {
         "type": "pixel_updated",
         "x": request.x,
