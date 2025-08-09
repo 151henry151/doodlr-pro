@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text as RNText } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text as RNText, useWindowDimensions } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { useCanvas } from '../context/CanvasContext';
 import { canvasAPI, getApiBaseUrl } from '../services/api';
@@ -15,10 +15,9 @@ const Canvas = () => {
     fetchParams,
   } = useCanvas();
 
-  const getGridSize = () => 3;
+  const { width: winWidth, height: winHeight } = useWindowDimensions();
 
-  const CANVAS_PX = 350; // square canvas area for 3x3 grid
-  const getSectionSize = () => CANVAS_PX / getGridSize();
+  const getGridSize = () => 3;
 
   // True underlying pixel span per section at each level (matches backend model)
   const getSectionPixelSpan = () => {
@@ -30,6 +29,14 @@ const Canvas = () => {
     return 1;
   };
 
+  // Fit canvas to viewport: leave breathable padding for chrome/controls
+  const horizontalPadding = 40; // px
+  const verticalPadding = 220;  // px (header + footer controls area)
+  const availableWidth = Math.max(160, winWidth - horizontalPadding);
+  const availableHeight = Math.max(160, winHeight - verticalPadding);
+  const CANVAS_PX = Math.max(160, Math.min(availableWidth, availableHeight));
+
+  const getSectionSize = () => CANVAS_PX / getGridSize();
   const getPixelUnit = () => getSectionSize() / getSectionPixelSpan();
 
   // SVG rendering for L1..L5 with realtime refresh
@@ -139,7 +146,7 @@ const Canvas = () => {
       <View style={styles.canvas}>
         {currentLevel >= 1 && currentLevel <= 5 ? (
           <View style={{ width: CANVAS_PX, height: CANVAS_PX }}>
-            {svgMarkup ? <SvgXml xml={svgMarkup} width="100%" height="100%" /> : null}
+            {svgMarkup ? <SvgXml xml={svgMarkup} width={CANVAS_PX} height={CANVAS_PX} /> : null}
             <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
               {renderGrid()}
             </View>

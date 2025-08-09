@@ -100,17 +100,17 @@ def _render_svg(level: int, section_x: int, section_y: int, db: Session) -> str:
 
     # SVG header with viewBox matching the pixel span (1 unit per pixel)
     svg_parts: List[str] = []
-    svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {span_x} {span_y}">')
+    svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {span_x} {span_y}" shape-rendering="crispEdges" preserveAspectRatio="none">')
 
-    # Background
-    svg_parts.append('<rect x="0" y="0" width="100%" height="100%" fill="#f0f0f0"/>')
+    # Background (solid, non-transparent)
+    svg_parts.append('<rect x="0" y="0" width="100%" height="100%" fill="#f0f0f0" shape-rendering="crispEdges"/>')
 
     # Draw painted pixels (single-unit rects)
     for p in pixels:
         lx = p.x - start_x
         ly = p.y - start_y
         color = _color_to_hex(p.color)
-        svg_parts.append(f'<rect x="{lx}" y="{ly}" width="1" height="1" fill="{color}" />')
+        svg_parts.append(f'<rect x="{lx}" y="{ly}" width="1" height="1" fill="{color}" shape-rendering="crispEdges" />')
 
     # Grid lines for 3x3 sections
     base = _level_base_section_size(level)
