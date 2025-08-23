@@ -5,11 +5,20 @@ from datetime import datetime
 from typing import List, Tuple
 from database import get_db, Canvas
 from models.canvas import CanvasModel, PixelData, CanvasSection, PaintRequest, ZoomRequest
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 router = APIRouter()
 
 # In-memory reports store (simple MVP; replace with DB later)
 REPORTS: List[dict] = []
+
+# Basic auth for admin endpoints (development only)
+security = HTTPBasic()
+
+def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
+    if not (credentials.username == "admin" and credentials.password == "evergreen"):
+        raise HTTPException(status_code=401, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
+    return True
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -464,11 +473,11 @@ async def report_content(level: int, x: int, y: int, reason: str = "unspecified"
     return {"message": "Report received"}
 
 @router.get("/admin/reports")
-async def list_reports():
+async def list_reports(_: bool = Depends(verify_admin)):
     return {"reports": REPORTS}
 
 @router.post("/admin/clear")
-async def admin_clear_canvas(db: Session = Depends(get_db)):
+async def admin_clear_canvas(db: Session = Depends(get_db), _: bool = Depends(verify_admin)):
     # Danger: clear all pixels
     db.query(Canvas).delete()
     db.commit()

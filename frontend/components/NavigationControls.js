@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, Linking, Platform, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, Linking, Platform, Modal, TextInput, ActivityIndicator, ToastAndroid } from 'react-native';
 import { useCanvas } from '../context/CanvasContext';
 import { getApiBaseUrl } from '../services/api';
 
@@ -9,6 +9,16 @@ const NavigationControls = () => {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState('');
+  const [bannerType, setBannerType] = useState('info');
+  const [bannerVisible, setBannerVisible] = useState(false);
+
+  const showBanner = (message, type = 'info') => {
+    setBannerMessage(message);
+    setBannerType(type);
+    setBannerVisible(true);
+    setTimeout(() => setBannerVisible(false), 2500);
+  };
 
   const openLegal = async () => {
     const url = 'https://hromp.com/doodlr/conduct.html';
@@ -37,9 +47,21 @@ const NavigationControls = () => {
       await fetch(`${base}/report?${params.toString()}`, { method: 'POST' });
       setIsReportOpen(false);
       setReportText('');
-      if (Platform.OS === 'web') alert('Report submitted. Thank you.');
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Report submitted. Thank you.', ToastAndroid.SHORT);
+      } else if (Platform.OS === 'web') {
+        alert('Report submitted. Thank you.');
+      } else {
+        showBanner('Report submitted. Thank you.', 'success');
+      }
     } catch (e) {
-      if (Platform.OS === 'web') alert('Report failed');
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Report failed', ToastAndroid.SHORT);
+      } else if (Platform.OS === 'web') {
+        alert('Report failed');
+      } else {
+        showBanner('Report failed', 'error');
+      }
     } finally {
       setIsSubmittingReport(false);
     }
@@ -52,37 +74,46 @@ const NavigationControls = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.button, currentLevel === 1 && styles.disabledButton]}
-        onPress={navigateBack}
-        disabled={currentLevel === 1}
-      >
-        <RNText style={[styles.buttonText, currentLevel === 1 && styles.disabledText]}>
-          Back
-        </RNText>
-      </TouchableOpacity>
+      <View style={styles.controlsRow}>
+        <TouchableOpacity
+          style={[styles.button, currentLevel === 1 && styles.disabledButton]}
+          onPress={navigateBack}
+          disabled={currentLevel === 1}
+        >
+          <RNText style={[styles.buttonText, currentLevel === 1 && styles.disabledText]}>
+            Back
+          </RNText>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={goToRoot}>
-        <RNText style={styles.buttonText}>Home</RNText>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={goToRoot}>
+          <RNText style={styles.buttonText}>Home</RNText>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={openReport}>
-        <RNText style={styles.buttonText}>Report</RNText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openPrivacy}>
-        <RNText style={styles.buttonText}>Privacy</RNText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openTerms}>
-        <RNText style={styles.buttonText}>Terms</RNText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openLegal}>
-        <RNText style={styles.buttonText}>Conduct</RNText>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={openReport}>
+          <RNText style={styles.buttonText}>Report</RNText>
+        </TouchableOpacity>
+      </View>
 
       <RNText style={styles.levelText}>Level {currentLevel}</RNText>
+
+      {bannerVisible && Platform.OS !== 'android' && (
+        <View
+          style={[
+            styles.feedbackBanner,
+            { backgroundColor: bannerType === 'success' ? '#2e7d32' : bannerType === 'error' ? '#c62828' : '#424242' },
+          ]}
+        >
+          <RNText style={styles.feedbackText}>{bannerMessage}</RNText>
+        </View>
+      )}
+
+      <View style={styles.footerLinks}>
+        <RNText style={styles.linkText} accessibilityRole="link" onPress={openPrivacy}>Privacy</RNText>
+        <RNText style={styles.separator}> · </RNText>
+        <RNText style={styles.linkText} accessibilityRole="link" onPress={openTerms}>Terms</RNText>
+        <RNText style={styles.separator}> · </RNText>
+        <RNText style={styles.linkText} accessibilityRole="link" onPress={openLegal}>Conduct</RNText>
+      </View>
 
       <Modal
         visible={isReportOpen}
@@ -128,13 +159,15 @@ const NavigationControls = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    padding: 20,
+    padding: 16,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
   },
@@ -167,9 +200,40 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   levelText: {
+    marginTop: 8,
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
     color: '#333',
+  },
+  footerLinks: {
+    marginTop: 6,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#007AFF',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
+  separator: {
+    color: '#999',
+    fontSize: 13,
+    marginHorizontal: 6,
+  },
+  feedbackBanner: {
+    width: '100%',
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  feedbackText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalBackdrop: {
     flex: 1,
