@@ -14,7 +14,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@expo/webpack-config": "^19.0.1",
     "axios": "^1.11.0",
     "expo": "~53.0.20",
     "expo-status-bar": "~2.2.3",
