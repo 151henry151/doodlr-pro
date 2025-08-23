@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-08-23
+
+### 🔧 Build Optimization & Bug Fixes
+
+This patch release focuses on build system improvements and dependency fixes to ensure optimal app performance and Google Play Store compatibility.
+
+#### 🐛 Fixed
+- **Dependency Conflict**: Removed incompatible `@expo/webpack-config` dependency that was causing build failures
+- **Build System**: Fixed EAS build configuration for managed workflow compatibility
+- **Version Management**: Properly configured version codes for Android and iOS platforms
+
+#### ⚡ Performance
+- **R8/ProGuard Optimization**: Added comprehensive ProGuard rules for optimal code obfuscation
+- **App Size Reduction**: Enabled R8 full mode for maximum code optimization
+- **Stack Trace Support**: Preserved debugging information for crash analysis
+- **Build Efficiency**: Streamlined build process for faster deployment
+
+#### 🔧 Technical Improvements
+- **ProGuard Rules**: Added essential keep rules for React Native and Expo modules
+- **EAS Configuration**: Updated build profiles for production optimization
+- **Dependency Management**: Cleaned up package.json for managed workflow compatibility
+- **Version Codes**: Updated Android versionCode to 3 and iOS buildNumber to 1.0.1
+
+#### 📱 Platform Support
+- **Android**: Optimized for Google Play Store with proper R8/ProGuard configuration
+- **iOS**: Updated build number for App Store compatibility
+- **Web**: Maintained compatibility with web platform
+
+---
+
 ## [1.0.0] - 2025-08-23
 
 ### 🎉 Initial Release - Doodlr Collaborative Drawing App
@@ -205,6 +235,13 @@ The app includes 12 carefully selected colors:
 ---
 
 ## Version History
+
+### [1.0.1] - 2025-08-23
+- Build optimization and bug fixes
+- R8/ProGuard configuration for optimal performance
+- Fixed dependency conflicts
+- Updated version codes for all platforms
+- Enhanced Google Play Store compatibility
 
 ### [1.0.0] - 2025-08-23
 - Initial public release
