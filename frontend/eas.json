@@ -17,7 +17,12 @@
     "production": {
       "android": {
         "gradleCommand": ":app:bundleRelease",
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "gradleProperties": {
+          "android.enableR8": "true",
+          "android.enableR8.fullMode": "true",
+          "android.enableProguardInReleaseBuilds": "true"
+        }
       },
       "ios": {
         "autoIncrement": true

@@ -28,7 +28,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.romp.doodlr",
-      "versionCode": 1
+      "versionCode": 1,
+      "proguard": {
+        "enabled": true,
+        "rules": "./proguard-rules.pro"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
