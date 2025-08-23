@@ -11,7 +11,7 @@
         "distribution": "internal"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://your-backend.example.com"
+        "EXPO_PUBLIC_API_URL": "https://hromp.com/doodlr/api"
       }
     },
     "production": {
@@ -23,7 +23,7 @@
         "autoIncrement": true
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://your-backend.example.com"
+        "EXPO_PUBLIC_API_URL": "https://hromp.com/doodlr/api"
       }
     }
   },
