@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-08-24
+
+### 🎨 Icon Fixes & Visual Improvements
+
+This patch release fixes critical visual issues with app icons on Android devices, ensuring proper branding and user experience.
+
+#### 🐛 Fixed
+- **Missing App Icons**: Fixed greyscale adaptive icons that were not displaying properly on Android devices
+- **Icon Quality**: Replaced low-quality colormap icons with high-quality RGB/RGBA versions
+- **Brand Consistency**: All icons now use the proper Doodlr branding and colors from doodlr-icon.png
+- **Visual Display**: Icons now display correctly in app launcher, settings, and notifications
+
+#### 🎨 Visual Improvements
+- **Adaptive Icon**: Updated to full-color 1024x1024 RGB version with proper Doodlr branding
+- **App Icon**: Enhanced main app icon with transparent background and proper colors
+- **Favicon**: Updated web favicon with proper color scheme
+- **Splash Icon**: Improved splash screen icon with white background and proper branding
+
+#### 🔧 Technical Details
+- **Source**: Generated all icons from high-quality doodlr-icon.png (2048x2048 RGB)
+- **Format**: Converted from greyscale colormap to full-color RGB/RGBA
+- **Sizes**: Properly sized for Android adaptive icons (1024x1024)
+- **Quality**: Maintained high resolution and color fidelity
+
+---
+
 ## [1.0.1] - 2025-08-23
 
 ### 🔧 Build Optimization & Bug Fixes
@@ -241,6 +267,12 @@ The app includes 12 carefully selected colors:
 ---
 
 ## Version History
+
+### [1.0.2] - 2025-08-24
+- Fixed missing and incorrect app icons on Android devices
+- Replaced greyscale icons with proper color versions
+- Updated all icon assets with proper Doodlr branding
+- Enhanced visual consistency across all platforms
 
 ### [1.0.1] - 2025-08-23
 - Build optimization and bug fixes
