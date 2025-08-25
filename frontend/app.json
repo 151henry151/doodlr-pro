@@ -2,7 +2,7 @@
   "expo": {
     "name": "Doodlr",
     "slug": "doodlr",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.romp.doodlr",
-      "buildNumber": "1.0.2",
+      "buildNumber": "1.0.3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -28,7 +28,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.romp.doodlr",
-      "versionCode": 4
+      "versionCode": 5,
+      "proguard": {
+        "enabled": true,
+        "rules": "./proguard-rules.pro"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

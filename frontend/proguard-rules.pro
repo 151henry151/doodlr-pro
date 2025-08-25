@@ -27,6 +27,11 @@
 -keepattributes SourceFile,LineNumberTable
 -keepattributes Exceptions,InnerClasses
 
+# Enable deobfuscation file generation
+-printmapping mapping.txt
+-printseeds seeds.txt
+-printconfiguration configuration.txt
+
 # Keep package names for debugging
 -keepnames class com.romp.doodlr.** { *; }
 
