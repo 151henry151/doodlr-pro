@@ -4,7 +4,7 @@ import { useCanvas } from '../context/CanvasContext';
 import { getApiBaseUrl } from '../services/api';
 
 const NavigationControls = () => {
-  const { currentLevel, navigateBack, goToRoot, fetchParams } = useCanvas();
+  const { currentLevel, navigateBack, goToRoot, fetchParams, drawingMode, toggleDrawingMode, isDrawableLevel } = useCanvas();
 
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
@@ -88,6 +88,17 @@ const NavigationControls = () => {
         <TouchableOpacity style={styles.button} onPress={goToRoot}>
           <RNText style={styles.buttonText}>Home</RNText>
         </TouchableOpacity>
+
+        {isDrawableLevel() && (
+          <TouchableOpacity 
+            style={[styles.button, drawingMode && styles.activeButton]} 
+            onPress={toggleDrawingMode}
+          >
+            <RNText style={[styles.buttonText, drawingMode && styles.activeText]}>
+              {drawingMode ? 'Drawing' : 'Draw'}
+            </RNText>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity style={styles.button} onPress={openReport}>
           <RNText style={styles.buttonText}>Report</RNText>
@@ -186,10 +197,16 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#ccc',
   },
+  activeButton: {
+    backgroundColor: '#28a745',
+  },
   buttonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  activeText: {
+    color: '#fff',
   },
   secondaryText: {
     color: '#333',

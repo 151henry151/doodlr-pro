@@ -21,6 +21,8 @@ const initialState = {
     level5: null,
   },
   fetchParams: { level: 1, sectionX: null, sectionY: null },
+  // Drawing mode toggle for levels 4-6
+  drawingMode: false,
 };
 
 const canvasReducer = (state, action) => {
@@ -87,6 +89,10 @@ const canvasReducer = (state, action) => {
       return { ...state, lastFetch: action.payload };
     case 'SET_FETCH_PARAMS':
       return { ...state, fetchParams: action.payload };
+    case 'TOGGLE_DRAWING_MODE':
+      return { ...state, drawingMode: !state.drawingMode };
+    case 'SET_DRAWING_MODE':
+      return { ...state, drawingMode: action.payload };
     default:
       return state;
   }
@@ -129,23 +135,37 @@ export const CanvasProvider = ({ children }) => {
     }
   };
 
-  // Paint a pixel
-  const paintPixel = async (x, y, color) => {
+  // Paint a pixel (optimized for drag painting)
+  const paintPixel = async (x, y, color, shouldRefresh = true) => {
     try {
+      console.log(`Painting pixel at (${x}, ${y}) with color ${color}`);
       await canvasAPI.paintPixel(x, y, color);
-      if (state.currentLevel === 6) {
-        const fx = state.fetchParams?.sectionX ?? 0;
-        const fy = state.fetchParams?.sectionY ?? 0;
-        await loadCanvasData(6, fx, fy);
-      } else {
-        // Best-effort optimistic update for higher levels
-        const sectionSize = state.currentLevel === 1 ? 243 : state.currentLevel === 2 ? 81 : state.currentLevel === 3 ? 27 : state.currentLevel === 4 ? 9 : 3;
-        dispatch({
-          type: 'UPDATE_PIXEL',
-          payload: { x, y, color, sectionX: Math.floor(x / sectionSize), sectionY: Math.floor(y / sectionSize) },
-        });
+      console.log('Pixel painted successfully');
+      
+      if (shouldRefresh) {
+        console.log('Refreshing canvas data...');
+        // Refresh canvas data for all levels to ensure UI updates
+        // Use the current fetchParams to maintain the correct section context
+        const { level, sectionX, sectionY } = state.fetchParams;
+        console.log(`Refreshing with level=${level}, sectionX=${sectionX}, sectionY=${sectionY}`);
+        await loadCanvasData(level, sectionX, sectionY);
+        console.log('Canvas data refreshed');
       }
     } catch (error) {
+      console.error('Error painting pixel:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+    }
+  };
+
+  // Batch refresh for drag painting (call this after drag ends)
+  const refreshCanvasAfterDrag = async () => {
+    try {
+      console.log('Batch refreshing canvas after drag...');
+      const { level, sectionX, sectionY } = state.fetchParams;
+      await loadCanvasData(level, sectionX, sectionY);
+      console.log('Batch refresh completed');
+    } catch (error) {
+      console.error('Error refreshing canvas after drag:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message });
     }
   };
@@ -273,16 +293,34 @@ export const CanvasProvider = ({ children }) => {
   const selectColor = (color) => {
     dispatch({ type: 'SET_SELECTED_COLOR', payload: color });
   };
+
+  const toggleDrawingMode = async () => {
+    dispatch({ type: 'TOGGLE_DRAWING_MODE' });
+    // Refresh canvas data when switching to drawing mode to ensure we have the latest pixels
+    if (!state.drawingMode) { // We're switching TO drawing mode
+      await loadCanvasData(state.currentLevel, state.fetchParams.sectionX, state.fetchParams.sectionY);
+    }
+  };
+
+  const setDrawingMode = (mode) => {
+    dispatch({ type: 'SET_DRAWING_MODE', payload: mode });
+  };
+
+  const isDrawableLevel = () => state.currentLevel >= 4 && state.currentLevel <= 5;
  
   const value = {
     ...state,
     fetchParams: state.fetchParams,
     paintPixel,
+    refreshCanvasAfterDrag,
     zoomToSection,
     navigateBack,
     goToRoot,
     loadCanvasData,
     selectColor,
+    toggleDrawingMode,
+    setDrawingMode,
+    isDrawableLevel,
   };
 
   return (

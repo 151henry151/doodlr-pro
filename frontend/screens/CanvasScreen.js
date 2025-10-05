@@ -6,12 +6,12 @@ import NavigationControls from '../components/NavigationControls';
 import { useCanvas } from '../context/CanvasContext';
 
 const CanvasScreen = () => {
-  const { currentLevel } = useCanvas();
+  const { currentLevel, drawingMode } = useCanvas();
 
   return (
     <View style={styles.container}>
       <Canvas />
-      {currentLevel === 6 && <ColorPalette />}
+      {(currentLevel === 6 || (currentLevel >= 4 && currentLevel <= 5 && drawingMode)) && <ColorPalette />}
       <NavigationControls />
     </View>
   );
