@@ -8,11 +8,6 @@ function resolveApiBaseUrl() {
     return envUrl.trim();
   }
 
-  // For production web builds, always use the production API
-  if (Platform.OS === 'web') {
-    return 'https://hromp.com/doodlr/api';
-  }
-
   // Attempt to derive LAN host from Expo dev server info when running on device
   try {
     const hostUri = (Constants?.expoConfig && Constants.expoConfig.hostUri)

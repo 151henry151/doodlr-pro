@@ -52,14 +52,31 @@ const Canvas = () => {
   const getPixelCoordinates = (touchX, touchY) => {
     const pixelUnit = getPixelUnit();
     const pixelsPerSection = getSectionPixelSpan();
+    const gridSize = getGridSize();
+    const canvasSize = CANVAS_PX;
+    
+    // Validate that touch is within the visible canvas bounds
+    if (touchX < 0 || touchX >= canvasSize || touchY < 0 || touchY >= canvasSize) {
+      return null; // Touch is outside visible canvas
+    }
     
     // Calculate which section the touch is in
     const sectionX = Math.floor(touchX / getSectionSize());
     const sectionY = Math.floor(touchY / getSectionSize());
     
+    // Validate that section coordinates are within the visible grid
+    if (sectionX < 0 || sectionX >= gridSize || sectionY < 0 || sectionY >= gridSize) {
+      return null; // Touch is outside visible sections
+    }
+    
     // Calculate local pixel coordinates within the section
     const localX = Math.floor((touchX % getSectionSize()) / pixelUnit);
     const localY = Math.floor((touchY % getSectionSize()) / pixelUnit);
+    
+    // Validate that local coordinates are within the section bounds
+    if (localX < 0 || localX >= pixelsPerSection || localY < 0 || localY >= pixelsPerSection) {
+      return null; // Touch is outside section bounds
+    }
     
     // Calculate global coordinates using the same logic as TouchableOpacity
     const parentSectionX = fetchParams?.sectionX ?? 0;
@@ -87,7 +104,10 @@ const Canvas = () => {
   const handlePixelDraw = async (touchX, touchY) => {
     if (!shouldShowDrawing()) return;
     
-    const { globalX, globalY } = getPixelCoordinates(touchX, touchY);
+    const coords = getPixelCoordinates(touchX, touchY);
+    if (!coords) return; // Touch is outside visible canvas bounds
+    
+    const { globalX, globalY } = coords;
     const pixelKey = `${globalX},${globalY}`;
     
     // Prevent drawing the same pixel multiple times in a drag
@@ -114,21 +134,24 @@ const Canvas = () => {
       const lastCoords = lastDrawnPixel.split(',').map(Number);
       const currentCoords = getPixelCoordinates(x, y);
       
-      // Interpolate to fill gaps in fast drags
-      const dx = currentCoords.globalX - lastCoords[0];
-      const dy = currentCoords.globalY - lastCoords[1];
-      const steps = Math.max(Math.abs(dx), Math.abs(dy));
-      
-      if (steps > 1) {
-        // Fill in the gaps
-        for (let i = 1; i <= steps; i++) {
-          const interpolatedX = lastCoords[0] + Math.round((dx * i) / steps);
-          const interpolatedY = lastCoords[1] + Math.round((dy * i) / steps);
-          const pixelKey = `${interpolatedX},${interpolatedY}`;
-          
-          if (!paintedPixels.has(pixelKey)) {
-            setPaintedPixels(prev => new Set([...prev, pixelKey]));
-            paintPixel(interpolatedX, interpolatedY, selectedColor, false);
+      // Only interpolate if current position is valid (within bounds)
+      if (currentCoords) {
+        // Interpolate to fill gaps in fast drags
+        const dx = currentCoords.globalX - lastCoords[0];
+        const dy = currentCoords.globalY - lastCoords[1];
+        const steps = Math.max(Math.abs(dx), Math.abs(dy));
+        
+        if (steps > 1) {
+          // Fill in the gaps
+          for (let i = 1; i <= steps; i++) {
+            const interpolatedX = lastCoords[0] + Math.round((dx * i) / steps);
+            const interpolatedY = lastCoords[1] + Math.round((dy * i) / steps);
+            const pixelKey = `${interpolatedX},${interpolatedY}`;
+            
+            if (!paintedPixels.has(pixelKey)) {
+              setPaintedPixels(prev => new Set([...prev, pixelKey]));
+              paintPixel(interpolatedX, interpolatedY, selectedColor, false);
+            }
           }
         }
       }
